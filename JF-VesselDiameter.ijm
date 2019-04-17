@@ -6,15 +6,53 @@ sensitivity=100;
 step=5;
 resolution=1;
 samplenumber=2000;
+threshold_measure=10; // Ignore measurements less than this diameter
+threshold_max_measure=100; // Ignore measurements greater than this diameter
 
-/*Code*/ 
+/*=================================================*/
+/*Pull Image Information*/
+root_filename=File.nameWithoutExtension;
+path=File.directory;
+root_filename_jpg=root_filename+"-VesselDiameter.jpg";
+save_string=path+root_filename_jpg;
+save_results_string=path+root_filename+"-VesselDiameter-Results.csv";
+save_log_string=path+root_filename+"-VesselDiameter-MeasurementSettings.txt";
+
+/*=================================================*/
+/*Update Settings*/
+Dialog.create("Settings");
+Dialog.addMessage("VESSEL DIAMETER MEASUREMENT SETTINGS");
+Dialog.addNumber("Maximum Number of Measurements to Record: ",samplenumber);
+Dialog.addSlider("Vessel Diameter Threshold Minimum (pixels) -- Measurements less than this number will be ignored: ", 0, 15, threshold_measure);
+Dialog.addSlider("Vessel Diameter Threshold Maximum (pixels) -- Measurements greater than this number will be ignored: ", 20, 200, threshold_max_measure);
+Dialog.addSlider("Measurement Sensitivity -- Increase number to reduce noise: ",25,150,sensitivity);
+Dialog.addSlider("Scan Step Size -- Increase number to increase the vertical scan step: ",1,20,step);
+Dialog.addSlider("Resolution --  Decrease number to increase scanning resolution: ",1,5,resolution);
+Dialog.addMessage("Measurements may take a few minutes. Go get some coffee.");
+Dialog.show();
+
+samplenumber=Dialog.getNumber();
+threshold_measure=Dialog.getNumber();;
+threshold_max_measure=Dialog.getNumber();;;
+sensitivity=Dialog.getNumber();;;;
+step=Dialog.getNumber();;;;;
+resolution=Dialog.getNumber();;;;;;
+
+print("VESSEL DIAMETER SETTINGS");
+print("Image analysed: "+root_filename);
+print("     Maximum Number of Measurements: ",samplenumber,"\n     Vessel Diameter Threshold Minimum (pixels): ",threshold_measure,"\n     Vessel Diameter Threshold Maximum (pixels): ",threshold_max_measure,"\n     Measurement Sensitivity",sensitivity,"\n     Vertical Scan Step Size: ",step,"\n     Resolution: ",resolution);
+
+
+/*=================================================*/
+/*Measure Background*/ 
 // This code makes a rectangle in the upper left and checkes the mean intensity in order to get a background value
 makeRectangle(0,0,10,10);
 getStatistics(area,mean);
 background=mean;
+print("     Background Intensity: "+background);
 
-print("Background Intensity: "+background);
-
+/*=================================================*/
+/*Scan and Mark*/
 currentx=0; // set to 0 to start at the top of the image
 currenty=0; // set to 0 to start at the top of the image
 finalx1=newArray(100000);
@@ -69,9 +107,11 @@ else {
 	finaly2=Array.trim(finaly2,i);
 }
 
-print("Number of regions measured: "+finalx1.length);
+
 
 // Analyze the identified vessel segments
+p=0;
+Overlay.drawLabels(true);
 for(n=0;n<finalx1.length;n++) {
 
 		// Compare the horizontal vessel segment against rotated lines to identify the angle of segment that is the shortest diameter
@@ -123,14 +163,24 @@ for(n=0;n<finalx1.length;n++) {
 		final_line_x=Array.trim(final_line_x,count);	
 		final_line_y=Array.trim(final_line_y,count);
 		k=final_line_x.length;
-			if(final_line_x.length>0 && final_line_y.length>0) {
+			if(final_line_x.length>threshold_measure && final_line_y.length>threshold_measure && final_line_x.length < threshold_max_measure && final_line_y.length < threshold_max_measure ) {
 			makeLine(final_line_x[0],final_line_y[0],final_line_x[k-1],final_line_y[k-1]);
-			setResult("Diameter (pixels)",n,final_line_x.length);
+			setResult("Diameter (pixels)",p,final_line_x.length);
+			p=p+1;
+			Overlay.addSelection;
+			Overlay.drawString(p,final_line_x[0]-10,final_line_y[0]);
+			updateResults();
 		}
 			else {
-			setResult("Diameter (pixels)",n,0);
+			// setResult("Diameter (pixels)",p,0);
 			}
-		Overlay.addSelection;
-		updateResults();
+
+
+
 	}
 
+		print("\n Number of Vessel Diameter Measurements Recorded: "+p);
+		saveAs("jpeg",save_string);	
+		saveAs("Results",save_results_string);
+		showMessage("Analysis complete! Hope you enjoyed your coffee!");
+		close("*");
