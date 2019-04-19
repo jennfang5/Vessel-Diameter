@@ -2,8 +2,8 @@
 Overlay.remove;
 
 /* Default Values*/
-sensitivity=100;
-step=5;
+sensitivity=75;
+step=10;
 resolution=1;
 samplenumber=2000;
 threshold_measure=10; // Ignore measurements less than this diameter
@@ -81,8 +81,8 @@ do {
 				finaly1[i]=y1;
 				finaly2[i]=y2;
 				i=i+1;
-	
-		currentx=currentx+x2-x1;
+			currentx=currentx+threshold_max_measure-threshold_measure-step; // Try not to undersample horizontal vessels.
+			
 	}
 		currentx=currentx+1;
 	} while (currentx < getWidth());
@@ -130,14 +130,17 @@ for(n=0;n<finalx1.length;n++) {
 			if(line_mean_new<line_mean_check) {
 				line_mean_check=line_mean_new;
 				getLine(x1,y1,x2,y2,lineWidth);
-				finalx1[n]=x1;
-				finalx2[n]=x2;
-				finaly1[n]=y1;
-				finaly2[n]=y2;
+				if(getPixel(x1,y1)<=background+sensitivity && getPixel(x2,y2) <=background+sensitivity) {
+					finalx1[n]=x1;
+					finalx2[n]=x2;
+					finaly1[n]=y1;
+					finaly2[n]=y2;
+					}
 			}
 			rotate_angle=rotate_angle-1;
 		} while(rotate_angle>0);
 		
+		if(getPixel(finalx1[n],finaly1[n])<=background+sensitivity && getPixel(finalx2[n],finaly2[n])<=background+sensitivity) {
 		// Line selection cooresponding to angle of shortest diameter
 		makeLine(finalx1[n],finaly1[n],finalx2[n],finaly2[n]);
 
@@ -171,11 +174,9 @@ for(n=0;n<finalx1.length;n++) {
 			Overlay.drawString(p,final_line_x[0]-10,final_line_y[0]);
 			updateResults();
 		}
-			else {
-			// setResult("Diameter (pixels)",p,0);
-			}
+			
 
-
+		}
 
 	}
 
