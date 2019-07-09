@@ -1,6 +1,14 @@
-//Clears any previous overlay on the image.
-Overlay.remove;
+/*
+VESSEL DIAMETER v. 1.1
+By: Jennifer Fang
+This macro detects segmented vessels and measures vessel diameter.
 
+Version History:
+1.1 - Added batch processing and progress bar updating.
+*/
+
+
+/*=================================================*/
 /* Default Values*/
 sensitivity=75;
 step=10;
@@ -8,18 +16,10 @@ resolution=1;
 samplenumber=2000;
 threshold_measure=10; // Ignore measurements less than this diameter
 threshold_max_measure=100; // Ignore measurements greater than this diameter
+/*=================================================*/
 
 /*=================================================*/
-/*Pull Image Information*/
-root_filename=File.nameWithoutExtension;
-path=File.directory;
-root_filename_jpg=root_filename+"-VesselDiameter.jpg";
-save_string=path+root_filename_jpg;
-save_results_string=path+root_filename+"-VesselDiameter-Results.csv";
-save_log_string=path+root_filename+"-VesselDiameter-MeasurementSettings.txt";
-
-/*=================================================*/
-/*Update Settings*/
+/*Update Settings based on user query*/
 Dialog.create("Settings");
 Dialog.addMessage("VESSEL DIAMETER MEASUREMENT SETTINGS");
 Dialog.addNumber("Maximum Number of Measurements to Record: ",samplenumber);
@@ -38,10 +38,56 @@ sensitivity=Dialog.getNumber();;;;
 step=Dialog.getNumber();;;;;
 resolution=Dialog.getNumber();;;;;;
 
+
+/*=================================================*/
+/*Checks to see if there are images open. If not, asks us to choose a directory.*/
+if(nImages==0) {
+
+	/*Choose the directory to run the macro on.*/
+	path = getDirectory("Choose a Directory");
+
+	filenames = getFileList(path);
+
+	/* Trim out filenames that were retrieved that are actually sub-folders */
+	filenames_copy_counter=0;
+	for(i=0;i<filenames.length;i++) {
+		if(endsWith(filenames[i],"/")) {
+			filenames_copy_counter=filenames_copy_counter+1;
+			}
+		}
+	Array.reverse(filenames);
+	trim_array_length=filenames.length-filenames_copy_counter;
+	filenames=Array.trim(filenames,trim_array_length);
+	Array.reverse(filenames);
+}
+
+/*User has dragged and dropped images to open*/
+else {
+filenames=getList("image.titles");
+path=File.directory;
+
+//Clears any previous overlay on the image.
+Overlay.remove;
+}
+
+
+for(j=0;j<=filenames.length;j++) {
+	open(filenames[j]);
+
+	run("Set... ", "zoom=200"); // Speeds this macro up immensely
+/*=================================================*/
+/*File Information*/
+root_filename=File.nameWithoutExtension;
+
+
+root_filename_jpg=root_filename+"_VesselDiameter_jpg";
+save_string=path+root_filename_jpg;
+save_results_string=path+root_filename+"_VesselDiameter_Results.csv";
+save_log_string=path+root_filename+"_VesselDiameter_MeasurementSettings.txt";
 print("VESSEL DIAMETER SETTINGS");
+print("Directory: "+path);
 print("Image analysed: "+root_filename);
 print("     Maximum Number of Measurements: ",samplenumber,"\n     Vessel Diameter Threshold Minimum (pixels): ",threshold_measure,"\n     Vessel Diameter Threshold Maximum (pixels): ",threshold_max_measure,"\n     Measurement Sensitivity",sensitivity,"\n     Vertical Scan Step Size: ",step,"\n     Resolution: ",resolution);
-
 
 /*=================================================*/
 /*Measure Background*/ 
@@ -113,7 +159,9 @@ else {
 p=0;
 Overlay.drawLabels(true);
 for(n=0;n<finalx1.length;n++) {
-
+		//Update progress bar
+		showProgress(-n/finalx1.length);
+		
 		// Compare the horizontal vessel segment against rotated lines to identify the angle of segment that is the shortest diameter
 		makeLine(finalx1[n],finaly1[n],finalx2[n],finaly2[n]);
 		getStatistics(area,mean);
@@ -180,8 +228,12 @@ for(n=0;n<finalx1.length;n++) {
 
 	}
 
-		print("\n Number of Vessel Diameter Measurements Recorded: "+p);
+		print("\n Number of Vessel Diameter Measurements Recorded: "+p+"\n====================");
 		saveAs("jpeg",save_string);	
 		saveAs("Results",save_results_string);
-		showMessage("Analysis complete! Hope you enjoyed your coffee!");
 		close("*");
+
+}
+//Completed analysis message!
+		showMessage("Analysis complete! Hope you enjoyed your coffee!");
+
