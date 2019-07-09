@@ -234,6 +234,7 @@ for(n=0;n<finalx1.length;n++) {
 		saveAs("jpeg",save_string);	
 		saveAs("Results",save_results_string);
 		close("*");
+		close("Results");
 
 }
 //Completed analysis message!
