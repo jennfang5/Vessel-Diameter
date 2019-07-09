@@ -73,7 +73,9 @@ Overlay.remove;
 
 for(j=0;j<=filenames.length;j++) {
 	open(filenames[j]);
-
+	displaywidth=getWidth()/3;
+	displayheight=getHeight()/3;
+	setLocation(0,0,displaywidth,displayheight);
 	run("Set... ", "zoom=200"); // Speeds this macro up immensely
 /*=================================================*/
 /*File Information*/
