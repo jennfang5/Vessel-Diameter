@@ -71,7 +71,7 @@ Overlay.remove;
 }
 
 
-for(j=0;j<=filenames.length;j++) {
+for(j=0;j<=filenames.length-1;j++) {
 	open(filenames[j]);
 	displaywidth=getWidth()/3;
 	displayheight=getHeight()/3;
