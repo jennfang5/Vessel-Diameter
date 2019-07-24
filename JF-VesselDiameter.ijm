@@ -1,9 +1,10 @@
 /*
-VESSEL DIAMETER v. 1.1
+VESSEL DIAMETER v. 1.2
 By: Jennifer Fang
 This macro detects segmented vessels and measures vessel diameter.
 
 Version History:
+1.2 - Fix line drawing bug.
 1.1 - Added batch processing and progress bar updating.
 */
 
@@ -169,7 +170,7 @@ for(n=0;n<finalx1.length;n++) {
 		getStatistics(area,mean);
 		line_mean_original=mean;
 		rotate_angle=180;		
-		
+		line_angle=rotate_angle;
 		// free rotate and compare mean fluorescence
 		line_mean_check=line_mean_original;
 		do {
@@ -185,6 +186,7 @@ for(n=0;n<finalx1.length;n++) {
 					finalx2[n]=x2;
 					finaly1[n]=y1;
 					finaly2[n]=y2;
+					line_angle=rotate_angle;
 					}
 			}
 			rotate_angle=rotate_angle-1;
@@ -207,8 +209,7 @@ for(n=0;n<finalx1.length;n++) {
 					final_line_mean[count]=final_line[m];
 					final_line_x[count]=xpoints[m];
 					final_line_y[count]=ypoints[m];
-					count=count+1;
-					
+					count=count+1;		
 				}
 			m=m+1;
 			} while (m<xpoints.length);
@@ -218,11 +219,19 @@ for(n=0;n<finalx1.length;n++) {
 		k=final_line_x.length;
 			if(final_line_x.length>threshold_measure && final_line_y.length>threshold_measure && final_line_x.length < threshold_max_measure && final_line_y.length < threshold_max_measure ) {
 			makeLine(final_line_x[0],final_line_y[0],final_line_x[k-1],final_line_y[k-1]);
-			setResult("Diameter (pixels)",p,final_line_x.length);
-			p=p+1;
-			Overlay.addSelection;
-			Overlay.drawString(p,final_line_x[0]-10,final_line_y[0]);
-			updateResults();
+			/* Check to see if overlay line is much longer than expected, which suggests noise in the measurement. Discards any measurement that comes out that way. */
+			overlay_line=getProfile();
+			Roi.getContainedPoints(xpoints,ypoints);
+			overlay_line_points=xpoints.length;
+			if(overlay_line.length<=final_line_x.length+10) {
+				setResult("Measurement Number",p,p+1);
+				setResult("Diameter (pixels)",p,final_line_x.length);
+				setResult("Angle",p,line_angle);
+				p=p+1;
+				Overlay.addSelection;
+				Overlay.drawString(p,final_line_x[0]-10,final_line_y[0]);
+				updateResults();
+			}
 		}
 			
 
